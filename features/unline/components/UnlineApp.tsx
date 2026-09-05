@@ -10,10 +10,11 @@ import { unlineActions, useUnlineData } from '../useUnlineStore';
 import { DEFAULT_TRANSFORM_OPTIONS, type Draft, type LibraryFilter, type TextItem } from '../types';
 import { generateId } from '../utils';
 import { DraftRecoveryBanner } from './DraftRecoveryBanner';
+import { DropZone } from './DropZone';
 import { Editor, type EditorHandle } from './Editor';
+import { FilterBar } from './FilterBar';
 import { Header } from './Header';
 import { Library } from './Library';
-import { Sidebar } from './Sidebar';
 
 function applyFilter(items: TextItem[], filter: LibraryFilter): TextItem[] {
   switch (filter.kind) {
@@ -34,12 +35,7 @@ export function UnlineApp() {
   const { items, collections } = useUnlineData();
   const [filter, setFilter] = useState<LibraryFilter>({ kind: 'all' });
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [editorTarget, setEditorTarget] = useState<EditorTarget>(null);
-  // Stable across a new-draft -> saved-item transition so the Editor is not
-  // remounted (and its in-flight save/copy status lost) purely because its
-  // identity moved from a local draft id to a freshly assigned server id.
   const [editorSessionId, setEditorSessionId] = useState<string | null>(null);
   const [rejectionMessage, setRejectionMessage] = useState<string | null>(null);
 
@@ -71,16 +67,17 @@ export function UnlineApp() {
     });
   };
 
+  const closeEditor = () => {
+    setEditorTarget(null);
+    setEditorSessionId(null);
+  };
+
   useKeyboardShortcuts({
     onSearch: () => searchInputRef.current?.focus(),
     onNew: () => openNewDraft(),
     onSave: () => editorRef.current?.save(),
     onCopy: () => editorRef.current?.copy(),
-    onEscape: () => {
-      if (!editorTarget) return;
-      setEditorTarget(null);
-      setEditorSessionId(null);
-    },
+    onEscape: () => editorTarget && closeEditor(),
   });
 
   const openItem = (id: string) => {
@@ -93,13 +90,7 @@ export function UnlineApp() {
 
   return (
     <div className="unline-root">
-      <Header
-        ref={searchInputRef}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onNew={() => openNewDraft()}
-        onToggleSidebar={() => setSidebarCollapsed((v) => !v)}
-      />
+      <Header ref={searchInputRef} searchQuery={searchQuery} onSearchChange={setSearchQuery} onNew={() => openNewDraft()} />
 
       {draftRecovery.recoverable && (
         <DraftRecoveryBanner
@@ -125,8 +116,10 @@ export function UnlineApp() {
         </div>
       )}
 
-      <div className="unline-body">
-        <Sidebar
+      <main className="unline-main">
+        <DropZone onText={openNewDraft} onRejected={setRejectionMessage} />
+
+        <FilterBar
           collections={collections}
           items={items}
           filter={filter}
@@ -134,7 +127,6 @@ export function UnlineApp() {
           onCreateCollection={(name) => unlineActions.createCollection(name)}
           onRenameCollection={(id, name) => unlineActions.renameCollection(id, name)}
           onDeleteCollection={(id) => unlineActions.deleteCollection(id)}
-          collapsed={sidebarCollapsed}
         />
 
         <Library
@@ -143,10 +135,6 @@ export function UnlineApp() {
           collections={collections}
           filter={filter}
           searchQuery={searchQuery}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onDropText={openNewDraft}
-          onDropRejected={setRejectionMessage}
           onOpenItem={openItem}
           onTogglePin={(id) => {
             const item = storage.getItem(id);
@@ -158,33 +146,28 @@ export function UnlineApp() {
           }}
           onDeleteItem={(id) => {
             unlineActions.deleteTextItem(id);
-            if (editorTarget?.kind === 'item' && editorTarget.id === id) {
-              setEditorTarget(null);
-              setEditorSessionId(null);
-            }
+            if (editorTarget?.kind === 'item' && editorTarget.id === id) closeEditor();
           }}
           onNewText={() => openNewDraft()}
         />
+      </main>
 
-        {editorTarget && !editorIsStale && (
-          <Editor
-            ref={editorRef}
-            key={editorSessionId}
-            item={currentItem}
-            initialDraft={editorTarget.draft ?? null}
-            collections={collections}
-            onClose={() => {
-              setEditorTarget(null);
-              setEditorSessionId(null);
-            }}
-            onSaved={(saved) => setEditorTarget({ kind: 'item', id: saved.id })}
-            onDeleted={() => {
-              setEditorTarget(null);
-              setEditorSessionId(null);
-            }}
-          />
-        )}
-      </div>
+      {editorTarget && !editorIsStale && (
+        <div className="unline-editor-overlay" onClick={closeEditor}>
+          <div className="unline-editor-overlay__panel" onClick={(e) => e.stopPropagation()}>
+            <Editor
+              ref={editorRef}
+              key={editorSessionId}
+              item={currentItem}
+              initialDraft={editorTarget.draft ?? null}
+              collections={collections}
+              onClose={closeEditor}
+              onSaved={(saved) => setEditorTarget({ kind: 'item', id: saved.id })}
+              onDeleted={closeEditor}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { UnlineApp } from '@/features/unline/components/UnlineApp';
+import { UnlineGate } from '@/features/unline/components/UnlineGate';
 
 export default function UnlinePage() {
-  return <UnlineApp />;
+  return <UnlineGate />;
 }

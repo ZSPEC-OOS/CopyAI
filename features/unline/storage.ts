@@ -19,11 +19,27 @@ import {
 } from './types';
 import { clamp, generateId, nowISO } from './utils';
 
+// All keys are namespaced by the signed-in profile's Firebase uid, set via
+// setNamespace() before this module is read. This is what gives each
+// CopyAI profile its own Unline library with no crossover — switching
+// profiles switches the entire keyspace, not just the visible data.
+let namespace = '_unauthenticated';
+
+export function setNamespace(next: string): void {
+  if (next === namespace) return;
+  namespace = next;
+  invalidateSnapshot();
+}
+
+export function getNamespace(): string {
+  return namespace;
+}
+
 const KEYS = {
-  items: 'unline:v1:items',
-  collections: 'unline:v1:collections',
-  versions: 'unline:v1:versions',
-  draft: 'unline:v1:draft',
+  items: () => `unline:v1:${namespace}:items`,
+  collections: () => `unline:v1:${namespace}:collections`,
+  versions: () => `unline:v1:${namespace}:versions`,
+  draft: () => `unline:v1:${namespace}:draft`,
 } as const;
 
 const UNCATEGORIZED_ID = null;
@@ -153,11 +169,11 @@ function isCollection(value: unknown): value is Collection {
 // ---------------------------------------------------------------------------
 
 function loadItems(): TextItem[] {
-  return readJSON<unknown[]>(KEYS.items, []).filter(isTextItem);
+  return readJSON<unknown[]>(KEYS.items(), []).filter(isTextItem);
 }
 
 function persistItems(items: TextItem[]): void {
-  writeJSON(KEYS.items, items);
+  writeJSON(KEYS.items(), items);
   invalidateSnapshot();
 }
 
@@ -266,7 +282,7 @@ export function updateTextItem(id: ID, patch: UpdateTextItemInput): TextItem {
 export function deleteTextItem(id: ID): void {
   persistItems(loadItems().filter((item) => item.id !== id));
   const versions = loadVersions().filter((v) => v.textItemId !== id);
-  writeJSON(KEYS.versions, versions);
+  writeJSON(KEYS.versions(), versions);
 }
 
 // ---------------------------------------------------------------------------
@@ -274,11 +290,11 @@ export function deleteTextItem(id: ID): void {
 // ---------------------------------------------------------------------------
 
 function loadCollections(): Collection[] {
-  return readJSON<unknown[]>(KEYS.collections, []).filter(isCollection);
+  return readJSON<unknown[]>(KEYS.collections(), []).filter(isCollection);
 }
 
 function persistCollections(collections: Collection[]): void {
-  writeJSON(KEYS.collections, collections);
+  writeJSON(KEYS.collections(), collections);
   invalidateSnapshot();
 }
 
@@ -338,7 +354,7 @@ export function collectionItemCount(id: ID): number {
 // ---------------------------------------------------------------------------
 
 function loadVersions(): TextVersion[] {
-  return readJSON<TextVersion[]>(KEYS.versions, []);
+  return readJSON<TextVersion[]>(KEYS.versions(), []);
 }
 
 function createVersion(item: TextItem): TextVersion {
@@ -356,7 +372,7 @@ function createVersion(item: TextItem): TextVersion {
   const otherVersions = versions.filter((v) => v.textItemId !== item.id);
   const trimmed = [version, ...itemVersions].slice(0, LIMITS.MAX_VERSIONS_PER_ITEM);
 
-  writeJSON(KEYS.versions, [...otherVersions, ...trimmed]);
+  writeJSON(KEYS.versions(), [...otherVersions, ...trimmed]);
   return version;
 }
 
@@ -382,17 +398,17 @@ export function restoreVersion(versionId: ID): TextItem {
 // ---------------------------------------------------------------------------
 
 export function getDraft(): Draft | null {
-  return readJSON<Draft | null>(KEYS.draft, null);
+  return readJSON<Draft | null>(KEYS.draft(), null);
 }
 
 export function saveDraft(draft: Omit<Draft, 'updatedAt'>): void {
   const value: Draft = { ...draft, updatedAt: nowISO() };
-  writeJSON(KEYS.draft, value);
+  writeJSON(KEYS.draft(), value);
 }
 
 export function clearDraft(): void {
   if (!isBrowser()) return;
-  window.localStorage.removeItem(KEYS.draft);
+  window.localStorage.removeItem(KEYS.draft());
 }
 
 export function createEmptyDraft(): Draft {

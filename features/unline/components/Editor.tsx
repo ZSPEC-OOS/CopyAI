@@ -1,18 +1,10 @@
 'use client';
 
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import * as storage from '../storage';
-import { unlineActions } from '../useUnlineStore';
-import { countCharacters, countWords, transformText } from '../transform';
+import { unlineActions, useTextItemVersions } from '../useUnlineStore';
+import { countCharacters, countWords } from '../transform';
 import {
   DEFAULT_TRANSFORM_OPTIONS,
   LIMITS,
@@ -20,12 +12,10 @@ import {
   type Draft,
   type SaveStatus,
   type TextItem,
-  type TransformOptions,
 } from '../types';
 import { debounce, generateId } from '../utils';
 import { ConfirmDialog } from './ConfirmDialog';
 import { VersionHistory } from './VersionHistory';
-import { useTextItemVersions } from '../useUnlineStore';
 
 export interface EditorHandle {
   save: () => void;
@@ -41,13 +31,6 @@ interface EditorProps {
   onDeleted: (id: string) => void;
 }
 
-const OPTION_LABELS: { key: keyof TransformOptions; label: string }[] = [
-  { key: 'flattenLines', label: 'Flatten Lines' },
-  { key: 'trimSpaces', label: 'Trim Spaces' },
-  { key: 'normalizeSpaces', label: 'Normalize Spaces' },
-  { key: 'preserveParagraphs', label: 'Preserve Paragraphs' },
-];
-
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   { item, initialDraft, collections, onClose, onSaved, onDeleted },
   ref
@@ -57,22 +40,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   // so its fields take priority over the last-saved item state.
   const draftIdRef = useRef(initialDraft?.id ?? generateId());
   const [title, setTitle] = useState(initialDraft?.title ?? item?.title ?? '');
-  const [originalText, setOriginalText] = useState(initialDraft?.originalText ?? item?.originalText ?? '');
-  const [cleanedText, setCleanedText] = useState(initialDraft?.cleanedText ?? item?.cleanedText ?? '');
-  const [transformOptions, setTransformOptions] = useState<TransformOptions>(
-    initialDraft?.transformOptions ?? item?.transformOptions ?? DEFAULT_TRANSFORM_OPTIONS
-  );
+  const [text, setText] = useState(initialDraft?.cleanedText ?? item?.cleanedText ?? '');
   const [collectionId, setCollectionId] = useState<string | null>(item?.collectionId ?? null);
   const [tags, setTags] = useState<string[]>(item?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
   const [isFavorite, setIsFavorite] = useState(item?.isFavorite ?? false);
   const [isPinned, setIsPinned] = useState(item?.isPinned ?? false);
-  const [manualEdit, setManualEdit] = useState(() => {
-    if (!initialDraft) return false;
-    const freshTransform = transformText(initialDraft.originalText, initialDraft.transformOptions).text;
-    return initialDraft.cleanedText !== freshTransform;
-  });
-  const [pendingOptions, setPendingOptions] = useState<TransformOptions | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -82,15 +55,8 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   const versions = useTextItemVersions(currentItem?.id ?? null);
   const { state: copyState, copy: copyToClipboard } = useCopyFeedback();
 
-  // Only recomputed from the source text + options, not from every
-  // keystroke in the editable cleaned-text field.
-  const lastTransformStats = useMemo(
-    () => transformText(originalText, transformOptions),
-    [originalText, transformOptions]
-  );
-
-  const wordCount = countWords(cleanedText);
-  const characterCount = countCharacters(cleanedText);
+  const wordCount = countWords(text);
+  const characterCount = countCharacters(text);
 
   const savedSnapshotRef = useRef({
     title: item?.title ?? '',
@@ -103,7 +69,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
   const isDirty =
     title !== savedSnapshotRef.current.title ||
-    cleanedText !== savedSnapshotRef.current.cleanedText ||
+    text !== savedSnapshotRef.current.cleanedText ||
     collectionId !== savedSnapshotRef.current.collectionId ||
     isFavorite !== savedSnapshotRef.current.isFavorite ||
     isPinned !== savedSnapshotRef.current.isPinned ||
@@ -129,31 +95,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       id: draftIdRef.current,
       textItemId: currentItem?.id ?? null,
       title,
-      originalText,
-      cleanedText,
-      transformOptions,
+      originalText: initialDraft?.originalText ?? item?.originalText ?? text,
+      cleanedText: text,
+      transformOptions: DEFAULT_TRANSFORM_OPTIONS,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, originalText, cleanedText, transformOptions, isDirty]);
-
-  const applyTransform = useCallback(
-    (options: TransformOptions) => {
-      const result = transformText(originalText, options);
-      setCleanedText(result.text);
-      setTransformOptions(options);
-      setManualEdit(false);
-    },
-    [originalText]
-  );
-
-  const handleOptionToggle = (key: keyof TransformOptions) => {
-    const next = { ...transformOptions, [key]: !transformOptions[key] };
-    if (manualEdit && cleanedText.trim().length > 0) {
-      setPendingOptions(next);
-    } else {
-      applyTransform(next);
-    }
-  };
+  }, [title, text, isDirty]);
 
   const handleSave = useCallback(() => {
     setSaveStatus('saving');
@@ -163,9 +110,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       if (currentItem) {
         saved = unlineActions.updateTextItem(currentItem.id, {
           title,
-          originalText,
-          cleanedText,
-          transformOptions,
+          cleanedText: text,
           collectionId,
           tags,
           isFavorite,
@@ -174,9 +119,9 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       } else {
         saved = unlineActions.createTextItem({
           title: title || 'Untitled',
-          originalText,
-          cleanedText,
-          transformOptions,
+          originalText: initialDraft?.originalText ?? text,
+          cleanedText: text,
+          transformOptions: DEFAULT_TRANSFORM_OPTIONS,
           collectionId,
           tags,
         });
@@ -200,11 +145,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       setSaveStatus('error');
       setErrorMessage(err instanceof Error ? err.message : 'Save failed. Please try again.');
     }
-  }, [currentItem, title, originalText, cleanedText, transformOptions, collectionId, tags, isFavorite, isPinned, onSaved]);
+  }, [currentItem, title, text, collectionId, tags, isFavorite, isPinned, initialDraft, onSaved]);
 
   const handleCopy = useCallback(() => {
-    copyToClipboard(cleanedText);
-  }, [copyToClipboard, cleanedText]);
+    copyToClipboard(text);
+  }, [copyToClipboard, text]);
 
   useImperativeHandle(ref, () => ({ save: handleSave, copy: handleCopy }), [handleSave, handleCopy]);
 
@@ -247,51 +192,14 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
       <div className="unline-editor__body">
         <section className="unline-editor__section">
-          <h3>Original text</h3>
-          <textarea
-            className="unline-editor__original"
-            aria-label="Original source text (unedited)"
-            value={originalText}
-            onChange={(e) => {
-              const next = e.target.value;
-              setOriginalText(next);
-              if (!manualEdit) {
-                setCleanedText(transformText(next, transformOptions).text);
-              }
-            }}
-            placeholder="Paste raw text here…"
-            rows={6}
-          />
-        </section>
-
-        <section className="unline-editor__section">
-          <div className="unline-editor__transform-summary">
-            {lastTransformStats.inputLineCount} line{lastTransformStats.inputLineCount === 1 ? '' : 's'} →{' '}
-            {lastTransformStats.outputParagraphCount} paragraph{lastTransformStats.outputParagraphCount === 1 ? '' : 's'}
-          </div>
-          <div className="unline-editor__options" role="group" aria-label="Transform options">
-            {OPTION_LABELS.map(({ key, label }) => (
-              <label key={key} className="unline-checkbox">
-                <input
-                  type="checkbox"
-                  checked={transformOptions[key]}
-                  onChange={() => handleOptionToggle(key)}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-
-          <h3>Cleaned text</h3>
           <textarea
             className="unline-editor__cleaned"
-            aria-label="Cleaned, editable text"
-            value={cleanedText}
-            onChange={(e) => {
-              setCleanedText(e.target.value);
-              setManualEdit(true);
-            }}
-            rows={10}
+            aria-label="Text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Paste text here…"
+            rows={14}
+            autoFocus
           />
           <div className="unline-editor__stats">
             {wordCount} words · {characterCount} characters
@@ -372,20 +280,6 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         </button>
       </footer>
 
-      {pendingOptions && (
-        <ConfirmDialog
-          title="Re-run transform from original?"
-          description="You've manually edited the cleaned text. Changing transform settings will regenerate it from the original text and discard those edits."
-          confirmLabel="Regenerate"
-          danger
-          onConfirm={() => {
-            applyTransform(pendingOptions);
-            setPendingOptions(null);
-          }}
-          onCancel={() => setPendingOptions(null)}
-        />
-      )}
-
       {confirmingDelete && currentItem && (
         <ConfirmDialog
           title="Delete this text item?"
@@ -410,8 +304,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
               const restored = unlineActions.restoreVersion(versionId);
               setCurrentItem(restored);
               setTitle(restored.title);
-              setOriginalText(restored.originalText);
-              setCleanedText(restored.cleanedText);
+              setText(restored.cleanedText);
               savedSnapshotRef.current = {
                 title: restored.title,
                 cleanedText: restored.cleanedText,
