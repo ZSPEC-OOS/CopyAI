@@ -751,6 +751,19 @@ export default function Page() {
                 >
                   + New Layout
                 </button>
+
+                <div style={{ height: 1, background: BORDER, margin: '4px 0' }} />
+
+                {/* Unline — standalone text-cleanup module, opens its own app at /unline */}
+                <a
+                  href="/unline"
+                  style={{ ...MENU_ITEM_STYLE, textDecoration: 'none' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = SURFACE; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; }}
+                  onClick={() => setShowMenu(false)}
+                >
+                  🧹 Unline
+                </a>
               </div>
             </>
           )}
