@@ -3,8 +3,28 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { db } from '@/lib/firebase';
+import { auth, db, usernameToEmail } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  type User,
+} from 'firebase/auth';
+
+/** Maps a Firebase Auth error into the same generic message regardless of
+ * cause (wrong password vs. unknown account), so login never leaks which
+ * usernames exist. */
+function describeAuthError(code: string, mode: 'login' | 'signup'): string {
+  if (mode === 'signup') {
+    if (code === 'auth/email-already-in-use') return 'That username is already taken.';
+    if (code === 'auth/weak-password') return 'Password must be at least 6 characters.';
+    return 'Could not create account. Please try again.';
+  }
+  return 'Incorrect username or password.';
+}
 
 type Card = {
   id: string;
@@ -88,19 +108,71 @@ export default function Page() {
   }, []);
 
   // ----------- State: auth -----------
-  const [loggedIn, setLoggedIn] = useState(false);
+  // Each profile is a real Firebase Auth account (see lib/firebase.ts for
+  // the username -> synthetic-email mapping), so prompts and Unline text
+  // are automatically scoped per-account with no crossover between users.
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
+  const loggedIn = !!currentUser;
 
-  function handleLogin(e: React.FormEvent) {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthChecked(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (loginUser === 'Jesse' && loginPass === 'copyai') {
-      setLoggedIn(true);
-      setLoginError('');
-    } else {
-      setLoginError('Incorrect username or password.');
+    if (authBusy) return;
+    setAuthBusy(true);
+    setLoginError('');
+    try {
+      await signInWithEmailAndPassword(auth, usernameToEmail(loginUser), loginPass);
+    } catch (err) {
+      const code = err instanceof Error && 'code' in err ? String((err as { code: unknown }).code) : '';
+      setLoginError(describeAuthError(code, 'login'));
+    } finally {
+      setAuthBusy(false);
     }
+  }
+
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault();
+    if (authBusy) return;
+    if (loginUser.trim().length < 2) {
+      setLoginError('Username must be at least 2 characters.');
+      return;
+    }
+    if (loginPass !== confirmPass) {
+      setLoginError('Passwords do not match.');
+      return;
+    }
+    setAuthBusy(true);
+    setLoginError('');
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, usernameToEmail(loginUser), loginPass);
+      await updateProfile(credential.user, { displayName: loginUser.trim() });
+      // Firebase doesn't locally refresh currentUser's displayName after
+      // updateProfile — re-set it so the migration check below sees it.
+      setCurrentUser({ ...credential.user, displayName: loginUser.trim() } as User);
+    } catch (err) {
+      const code = err instanceof Error && 'code' in err ? String((err as { code: unknown }).code) : '';
+      setLoginError(describeAuthError(code, 'signup'));
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  function handleSignOut() {
+    signOut(auth);
   }
 
   // ----------- State: cards on the page -----------
@@ -154,30 +226,59 @@ export default function Page() {
     });
   }
 
-  // Load from Firestore once after login
+  // Load from Firestore once per signed-in account. Each account's data
+  // lives at users/{uid} — never a shared/hardcoded doc — so profiles never
+  // see each other's prompts.
   useEffect(() => {
-    if (!loggedIn) return;
-    getDoc(doc(db, 'users', 'jesse')).then(snap => {
+    if (!currentUser) {
+      setCards([]);
+      setLayouts([]);
+      setDataLoaded(false);
+      return;
+    }
+    let cancelled = false;
+    setDataLoaded(false);
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    (async () => {
+      let snap = await getDoc(userDocRef);
+      // One-time migration: the app used to have a single hardcoded
+      // account ("Jesse"/"copyai") writing to users/jesse. The first time
+      // that exact username signs up for a real account, carry its old
+      // data over to the new per-account doc.
+      if (!snap.exists() && currentUser.displayName?.trim().toLowerCase() === 'jesse') {
+        const legacySnap = await getDoc(doc(db, 'users', 'jesse'));
+        if (legacySnap.exists()) {
+          await setDoc(userDocRef, legacySnap.data(), { merge: true });
+          snap = await getDoc(userDocRef);
+        }
+      }
+      if (cancelled) return;
       if (snap.exists()) {
         const data = snap.data();
-        if (data.cards) setCards(data.cards as Card[]);
-        if (data.layouts) setLayouts(data.layouts as LayoutEntry[]);
+        setCards((data.cards as Card[]) ?? []);
+        setLayouts((data.layouts as LayoutEntry[]) ?? []);
+      } else {
+        setCards([]);
+        setLayouts([]);
       }
       setDataLoaded(true);
-    });
-  }, [loggedIn]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
   // Save cards to Firestore whenever they change (after initial load)
   useEffect(() => {
-    if (!dataLoaded) return;
-    setDoc(doc(db, 'users', 'jesse'), { cards }, { merge: true });
-  }, [cards, dataLoaded]);
+    if (!dataLoaded || !currentUser) return;
+    setDoc(doc(db, 'users', currentUser.uid), { cards }, { merge: true });
+  }, [cards, dataLoaded, currentUser]);
 
   // Save layouts to Firestore whenever they change (after initial load)
   useEffect(() => {
-    if (!dataLoaded) return;
-    setDoc(doc(db, 'users', 'jesse'), { layouts }, { merge: true });
-  }, [layouts, dataLoaded]);
+    if (!dataLoaded || !currentUser) return;
+    setDoc(doc(db, 'users', currentUser.uid), { layouts }, { merge: true });
+  }, [layouts, dataLoaded, currentUser]);
 
   // WrkFlow postMessage protocol listener
   useEffect(() => {
@@ -191,12 +292,13 @@ export default function Page() {
       }
 
       if (type === 'WRKFLOW_LOGIN') {
-        if (username === 'Jesse' && password === 'copyai') {
-          setLoggedIn(true);
-          src.postMessage({ type: 'COPYAI_LOGGED_IN' }, event.origin);
-        } else {
-          src.postMessage({ type: 'COPYAI_LOGIN_FAILED', error: 'Incorrect credentials' }, event.origin);
-        }
+        signInWithEmailAndPassword(auth, usernameToEmail(String(username ?? '')), String(password ?? ''))
+          .then(() => {
+            src.postMessage({ type: 'COPYAI_LOGGED_IN' }, event.origin);
+          })
+          .catch(() => {
+            src.postMessage({ type: 'COPYAI_LOGIN_FAILED', error: 'Incorrect credentials' }, event.origin);
+          });
       }
 
       if (type === 'WRKFLOW_REQUEST_LIBRARY') {
@@ -526,8 +628,19 @@ export default function Page() {
     wordBreak: 'break-word',
   };
 
-  // ----------- Login screen -----------
+  // Waiting on Firebase Auth's own (async) session check, before we know
+  // whether to show the login screen or the app.
+  if (!authChecked) {
+    return (
+      <div style={{ minHeight: '100svh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <Image src="/copyai_logo.png" alt="CopyAI logo" width={56} height={56} priority style={{ borderRadius: 12, opacity: 0.8 }} />
+      </div>
+    );
+  }
+
+  // ----------- Login / Sign up screen -----------
   if (!loggedIn) {
+    const isSignUp = authMode === 'signup';
     return (
       <div style={{
         minHeight: '100svh',
@@ -539,7 +652,7 @@ export default function Page() {
         padding: '24px 16px',
       }}>
         <form
-          onSubmit={handleLogin}
+          onSubmit={isSignUp ? handleSignUp : handleLogin}
           style={{
             background: 'var(--panel)',
             border: '1px solid var(--border)',
@@ -590,10 +703,21 @@ export default function Page() {
               value={loginPass}
               onChange={e => { setLoginPass(e.target.value); setLoginError(''); }}
               placeholder="Password"
-              autoComplete="current-password"
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
               className="field"
               style={{ fontSize: 15 }}
             />
+            {isSignUp && (
+              <input
+                type="password"
+                value={confirmPass}
+                onChange={e => { setConfirmPass(e.target.value); setLoginError(''); }}
+                placeholder="Confirm password"
+                autoComplete="new-password"
+                className="field"
+                style={{ fontSize: 15 }}
+              />
+            )}
           </div>
 
           {/* Error */}
@@ -604,8 +728,26 @@ export default function Page() {
           )}
 
           {/* Submit */}
-          <button type="submit" className="btn-accent" style={{ width: '100%', justifyContent: 'center', fontSize: 15, padding: '11px 20px' }}>
-            Log In
+          <button
+            type="submit"
+            className="btn-accent"
+            disabled={authBusy}
+            style={{ width: '100%', justifyContent: 'center', fontSize: 15, padding: '11px 20px', opacity: authBusy ? 0.7 : 1 }}
+          >
+            {authBusy ? 'Please wait…' : isSignUp ? 'Sign Up' : 'Log In'}
+          </button>
+
+          {/* Mode toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMode(isSignUp ? 'login' : 'signup');
+              setLoginError('');
+              setConfirmPass('');
+            }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', padding: 0 }}
+          >
+            {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
           </button>
         </form>
       </div>
@@ -764,6 +906,24 @@ export default function Page() {
                 >
                   🧹 Unline
                 </a>
+
+                <div style={{ height: 1, background: BORDER, margin: '4px 0' }} />
+
+                {currentUser?.displayName && (
+                  <div style={{ padding: '5px 12px', fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    Signed in as {currentUser.displayName}
+                  </div>
+                )}
+
+                {/* Sign Out */}
+                <button
+                  style={MENU_ITEM_STYLE}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = SURFACE; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                  onClick={() => { handleSignOut(); setShowMenu(false); }}
+                >
+                  ↪ Sign Out
+                </button>
               </div>
             </>
           )}

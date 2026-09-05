@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Collection, LibraryFilter, TextItem } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
 
-interface SidebarProps {
+interface FilterBarProps {
   collections: Collection[];
   items: TextItem[];
   filter: LibraryFilter;
@@ -12,7 +12,6 @@ interface SidebarProps {
   onCreateCollection: (name: string) => void;
   onRenameCollection: (id: string, name: string) => void;
   onDeleteCollection: (id: string) => void;
-  collapsed: boolean;
 }
 
 function isSameFilter(a: LibraryFilter, b: LibraryFilter): boolean {
@@ -21,7 +20,7 @@ function isSameFilter(a: LibraryFilter, b: LibraryFilter): boolean {
   return true;
 }
 
-export function Sidebar({
+export function FilterBar({
   collections,
   items,
   filter,
@@ -29,13 +28,11 @@ export function Sidebar({
   onCreateCollection,
   onRenameCollection,
   onDeleteCollection,
-  collapsed,
-}: SidebarProps) {
+}: FilterBarProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [draftName, setDraftName] = useState('');
 
   const favoriteCount = items.filter((i) => i.isFavorite).length;
-  const recentCount = items.length;
 
   const submitNewCollection = () => {
     const name = draftName.trim();
@@ -45,49 +42,40 @@ export function Sidebar({
   };
 
   return (
-    <nav className={`unline-sidebar ${collapsed ? 'unline-sidebar--collapsed' : ''}`} aria-label="Unline library navigation">
-      <ul className="unline-sidebar__list">
-        <SidebarItem
-          label="All Text"
-          icon="📄"
-          count={items.length}
-          active={isSameFilter(filter, { kind: 'all' })}
-          onClick={() => onFilterChange({ kind: 'all' })}
-        />
-        <SidebarItem
-          label="Favorites"
-          icon="★"
-          count={favoriteCount}
-          active={isSameFilter(filter, { kind: 'favorites' })}
-          onClick={() => onFilterChange({ kind: 'favorites' })}
-        />
-        <SidebarItem
-          label="Recent"
-          icon="🕒"
-          count={recentCount}
-          active={isSameFilter(filter, { kind: 'recent' })}
-          onClick={() => onFilterChange({ kind: 'recent' })}
-        />
-      </ul>
+    <nav className="unline-filterbar" aria-label="Filter saved text">
+      <Pill
+        label="All Text"
+        count={items.length}
+        active={isSameFilter(filter, { kind: 'all' })}
+        onClick={() => onFilterChange({ kind: 'all' })}
+      />
+      <Pill
+        label="Favorites"
+        count={favoriteCount}
+        active={isSameFilter(filter, { kind: 'favorites' })}
+        onClick={() => onFilterChange({ kind: 'favorites' })}
+      />
+      <Pill
+        label="Recent"
+        active={isSameFilter(filter, { kind: 'recent' })}
+        onClick={() => onFilterChange({ kind: 'recent' })}
+      />
 
-      <div className="unline-sidebar__section-label">Collections</div>
-      <ul className="unline-sidebar__list">
-        {collections.map((collection) => (
-          <CollectionRow
-            key={collection.id}
-            collection={collection}
-            count={items.filter((i) => i.collectionId === collection.id).length}
-            active={isSameFilter(filter, { kind: 'collection', collectionId: collection.id })}
-            onSelect={() => onFilterChange({ kind: 'collection', collectionId: collection.id })}
-            onRename={(name) => onRenameCollection(collection.id, name)}
-            onDelete={() => onDeleteCollection(collection.id)}
-          />
-        ))}
-      </ul>
+      {collections.map((collection) => (
+        <CollectionPill
+          key={collection.id}
+          collection={collection}
+          count={items.filter((i) => i.collectionId === collection.id).length}
+          active={isSameFilter(filter, { kind: 'collection', collectionId: collection.id })}
+          onSelect={() => onFilterChange({ kind: 'collection', collectionId: collection.id })}
+          onRename={(name) => onRenameCollection(collection.id, name)}
+          onDelete={() => onDeleteCollection(collection.id)}
+        />
+      ))}
 
       {isCreating ? (
         <form
-          className="unline-sidebar__new-form"
+          className="unline-filterbar__new-form"
           onSubmit={(e) => {
             e.preventDefault();
             submitNewCollection();
@@ -109,7 +97,7 @@ export function Sidebar({
           />
         </form>
       ) : (
-        <button type="button" className="unline-sidebar__new-btn" onClick={() => setIsCreating(true)}>
+        <button type="button" className="unline-pill unline-pill--dashed" onClick={() => setIsCreating(true)}>
           + New Collection
         </button>
       )}
@@ -117,31 +105,26 @@ export function Sidebar({
   );
 }
 
-function SidebarItem({
+function Pill({
   label,
-  icon,
   count,
   active,
   onClick,
 }: {
   label: string;
-  icon: string;
-  count: number;
+  count?: number;
   active: boolean;
   onClick: () => void;
 }) {
   return (
-    <li>
-      <button type="button" className="unline-sidebar__item" data-active={active || undefined} onClick={onClick}>
-        <span aria-hidden="true">{icon}</span>
-        <span className="unline-sidebar__item-label">{label}</span>
-        {count > 0 && <span className="unline-sidebar__count">{count}</span>}
-      </button>
-    </li>
+    <button type="button" className="unline-pill" data-active={active || undefined} onClick={onClick}>
+      {label}
+      {typeof count === 'number' && count > 0 && <span className="unline-pill__count">{count}</span>}
+    </button>
   );
 }
 
-function CollectionRow({
+function CollectionPill({
   collection,
   count,
   active,
@@ -162,40 +145,37 @@ function CollectionRow({
 
   if (isRenaming) {
     return (
-      <li>
-        <form
-          className="unline-sidebar__new-form"
-          onSubmit={(e) => {
-            e.preventDefault();
+      <form
+        className="unline-filterbar__new-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onRename(name.trim() || collection.name);
+          setIsRenaming(false);
+        }}
+      >
+        <input
+          autoFocus
+          aria-label={`Rename ${collection.name}`}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => {
             onRename(name.trim() || collection.name);
             setIsRenaming(false);
           }}
-        >
-          <input
-            autoFocus
-            aria-label={`Rename ${collection.name}`}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => {
-              onRename(name.trim() || collection.name);
-              setIsRenaming(false);
-            }}
-            onKeyDown={(e) => e.key === 'Escape' && setIsRenaming(false)}
-          />
-        </form>
-      </li>
+          onKeyDown={(e) => e.key === 'Escape' && setIsRenaming(false)}
+        />
+      </form>
     );
   }
 
   return (
-    <li className="unline-sidebar__collection-row">
-      <button type="button" className="unline-sidebar__item" data-active={active || undefined} onClick={onSelect}>
-        <span aria-hidden="true">📁</span>
-        <span className="unline-sidebar__item-label">{collection.name}</span>
-        {count > 0 && <span className="unline-sidebar__count">{count}</span>}
+    <span className="unline-pill unline-pill--collection-wrap">
+      <button type="button" className="unline-pill__label" data-active={active || undefined} onClick={onSelect}>
+        📁 {collection.name}
+        {count > 0 && <span className="unline-pill__count">{count}</span>}
       </button>
       <details className="unline-tile-menu">
-        <summary className="unline-icon-btn" aria-label={`More actions for ${collection.name}`}>
+        <summary className="unline-icon-btn unline-icon-btn--xs" aria-label={`More actions for ${collection.name}`}>
           ⋯
         </summary>
         <div className="unline-tile-menu__panel" role="menu">
@@ -229,6 +209,6 @@ function CollectionRow({
           onCancel={() => setConfirmingDelete(false)}
         />
       )}
-    </li>
+    </span>
   );
 }

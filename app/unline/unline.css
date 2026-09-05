@@ -25,8 +25,6 @@
   background: var(--u-bg);
   color: var(--u-text);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
   isolation: isolate;
 }
 
@@ -63,26 +61,50 @@
 }
 
 /* ---------------------------------------------------------------- header */
+/* Mirrors CopyAI's own header: a centered row with the hamburger pinned
+   left and actions pinned right, so the brand always sits dead-center. */
 
 .unline-header {
   position: sticky;
   top: 0;
   z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 20px;
   background: var(--u-panel);
   border-bottom: 1px solid var(--u-border);
+  display: flex;
+  flex-direction: column;
 }
 
-.unline-header__menu-toggle {
-  display: none;
-}
-
+.unline-header__zone,
 .unline-header__brand {
   display: flex;
   align-items: center;
+}
+
+.unline-header-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  min-height: 52px;
+}
+
+.unline-header__zone {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  gap: 6px;
+}
+
+.unline-header__zone--left {
+  left: 16px;
+}
+
+.unline-header__zone--right {
+  right: 16px;
+}
+
+.unline-header__brand {
   gap: 8px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -94,37 +116,39 @@
   font-size: 20px;
 }
 
-.unline-header__search {
-  position: relative;
-  flex: 1;
-  max-width: 520px;
-  display: flex;
-  align-items: center;
+.unline-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
 }
 
-.unline-header__search-input {
-  width: 100%;
+.unline-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  min-width: 200px;
   background: var(--u-panel-2);
   border: 1px solid var(--u-border);
   border-radius: var(--u-radius-md);
-  padding: 8px 44px 8px 14px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.unline-dropdown__item {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--u-radius-sm);
   color: var(--u-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
-.unline-header__search-input::placeholder {
-  color: var(--u-text-secondary);
-}
-
-.unline-header__search .unline-kbd {
-  position: absolute;
-  right: 8px;
-}
-
-.unline-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
+.unline-dropdown__item:hover {
+  background: var(--u-panel);
 }
 
 .unline-kbd {
@@ -139,7 +163,7 @@
 .unline-help-popover {
   position: absolute;
   top: 54px;
-  right: 20px;
+  right: 16px;
   z-index: 50;
   width: 260px;
   background: var(--u-panel-2);
@@ -176,119 +200,44 @@
   right: 8px;
 }
 
-/* --------------------------------------------------------------- layout */
-
-.unline-body {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) 400px;
-}
-
-/* -------------------------------------------------------------- sidebar */
-
-.unline-sidebar {
-  border-right: 1px solid var(--u-border);
-  background: var(--u-panel);
-  padding: 16px 10px;
-  overflow-y: auto;
-}
-
-.unline-sidebar__list {
-  list-style: none;
-  margin: 0 0 12px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.unline-sidebar__section-label {
-  padding: 6px 10px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--u-text-secondary);
-}
-
-.unline-sidebar__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--u-radius-sm);
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.unline-sidebar__item:hover {
-  background: var(--u-panel-2);
-}
-
-.unline-sidebar__item[data-active] {
-  background: rgba(36, 116, 255, 0.14);
-  border-color: rgba(36, 116, 255, 0.4);
-  color: var(--u-text);
-}
-
-.unline-sidebar__item-label {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.unline-sidebar__count {
-  font-size: 11px;
-  color: var(--u-text-secondary);
-  background: var(--u-panel-2);
-  border-radius: 999px;
-  padding: 1px 7px;
-}
-
-.unline-sidebar__collection-row {
+.unline-search-row {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.unline-sidebar__collection-row .unline-tile-menu {
-  position: absolute;
-  right: 4px;
-}
-
-.unline-sidebar__new-btn,
-.unline-sidebar__new-form input {
+  max-width: 760px;
   width: 100%;
-  background: transparent;
-  border: 1px dashed var(--u-border);
-  border-radius: var(--u-radius-sm);
-  padding: 8px 10px;
-  color: var(--u-text-secondary);
-  text-align: left;
-  cursor: pointer;
+  margin: 0 auto;
+  padding: 0 16px 12px;
 }
 
-.unline-sidebar__new-form input {
-  border-style: solid;
+.unline-search-row__input {
+  width: 100%;
+  background: var(--u-panel-2);
+  border: 1px solid var(--u-border);
+  border-radius: var(--u-radius-md);
+  padding: 8px 44px 8px 14px;
   color: var(--u-text);
 }
 
-.unline-sidebar--collapsed {
-  display: none;
+.unline-search-row__input::placeholder {
+  color: var(--u-text-secondary);
 }
 
-/* -------------------------------------------------------------- library */
+.unline-search-row .unline-kbd {
+  position: absolute;
+  right: 24px;
+}
 
-.unline-library {
-  overflow-y: auto;
-  padding: 20px;
+/* ------------------------------------------------------------ main body */
+/* A single centered column, like CopyAI's own `main { maxWidth: 720 }`. */
+
+.unline-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .unline-dropzone {
@@ -350,48 +299,102 @@
   cursor: pointer;
 }
 
-.unline-library__toolbar {
+/* ------------------------------------------------------------ filterbar */
+
+.unline-filterbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
 }
 
-.unline-library__count {
+.unline-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--u-panel);
+  border: 1px solid var(--u-border);
+  border-radius: 999px;
+  padding: 6px 14px;
   font-size: 13px;
   color: var(--u-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.unline-view-toggle {
+.unline-pill:hover {
+  border-color: var(--u-border-hover);
+  color: var(--u-text);
+}
+
+.unline-pill[data-active],
+.unline-pill__label[data-active] {
+  background: rgba(36, 116, 255, 0.16);
+  border-color: rgba(36, 116, 255, 0.5);
+  color: var(--u-text);
+}
+
+.unline-pill--dashed {
+  border-style: dashed;
+  background: transparent;
+}
+
+.unline-pill--collection-wrap {
   display: inline-flex;
-  border: 1px solid var(--u-border);
-  border-radius: var(--u-radius-sm);
-  overflow: hidden;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  position: relative;
 }
 
-.unline-view-toggle button {
+.unline-pill__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--u-panel);
-  border: 0;
-  padding: 6px 12px;
-  font-size: 12px;
+  border: 1px solid var(--u-border);
+  border-radius: 999px;
+  padding: 6px 10px 6px 14px;
+  font-size: 13px;
   color: var(--u-text-secondary);
   cursor: pointer;
 }
 
-.unline-view-toggle button[aria-pressed='true'] {
-  background: var(--u-primary);
-  color: white;
+.unline-pill__count {
+  font-size: 11px;
+  color: var(--u-text-secondary);
+  background: var(--u-panel-2);
+  border-radius: 999px;
+  padding: 1px 7px;
 }
 
-.unline-tile-grid--grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+.unline-filterbar__new-form input {
+  background: var(--u-panel-2);
+  border: 1px solid var(--u-primary);
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: var(--u-text);
+  font-size: 13px;
 }
 
-.unline-tile-grid--list {
+.unline-icon-btn--xs {
+  width: 24px;
+  height: 24px;
+}
+
+/* --------------------------------------------------------------- library */
+
+.unline-library {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+}
+
+.unline-tile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* ----------------------------------------------------------------- tile */
@@ -400,12 +403,12 @@
   background: var(--u-panel);
   border: 1px solid var(--u-border);
   border-radius: var(--u-radius-md);
-  padding: 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
-  transition: border-color 0.12s ease, transform 0.12s ease;
+  transition: border-color 0.12s ease;
 }
 
 .unline-tile:hover {
@@ -445,7 +448,7 @@
   color: var(--u-text-secondary);
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -455,7 +458,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: auto;
 }
 
 .unline-tile__tags {
@@ -670,29 +672,49 @@
   color: var(--u-danger) !important;
 }
 
-/* --------------------------------------------------------------- editor */
+/* --------------------------------------------------- editor (overlay) */
+
+.unline-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(2, 6, 14, 0.65);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5vh 16px;
+  overflow-y: auto;
+}
+
+.unline-editor-overlay__panel {
+  width: 100%;
+  max-width: 760px;
+  margin: auto;
+}
 
 .unline-editor {
-  border-left: 1px solid var(--u-border);
   background: var(--u-panel);
+  border: 1px solid var(--u-border);
+  border-radius: var(--u-radius-lg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
   overflow-y: auto;
-  position: relative;
 }
 
 .unline-editor__header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 16px 0;
+  padding: 18px 20px 0;
 }
 
 .unline-editor__title {
   flex: 1;
   background: transparent;
   border: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--u-text);
 }
@@ -703,7 +725,7 @@
 }
 
 .unline-save-status {
-  margin: 6px 16px 0;
+  margin: 6px 20px 0;
   font-size: 12px;
   color: var(--u-text-secondary);
 }
@@ -722,7 +744,7 @@
 
 .unline-editor__body {
   flex: 1;
-  padding: 12px 16px;
+  padding: 14px 20px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -736,29 +758,15 @@
   margin: 0 0 8px;
 }
 
-.unline-editor__original,
 .unline-editor__cleaned {
   width: 100%;
   resize: vertical;
   background: var(--u-panel-2);
   border: 1px solid var(--u-border);
   border-radius: var(--u-radius-md);
-  padding: 10px 12px;
+  padding: 12px 14px;
   color: var(--u-text);
   line-height: 1.5;
-}
-
-.unline-editor__transform-summary {
-  font-size: 12px;
-  color: var(--u-primary);
-  margin-bottom: 8px;
-}
-
-.unline-editor__options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 14px;
 }
 
 .unline-editor__stats {
@@ -776,7 +784,7 @@
 .unline-editor__footer {
   display: flex;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 14px 20px;
   border-top: 1px solid var(--u-border);
   position: sticky;
   bottom: 0;
@@ -793,12 +801,13 @@
   background: var(--u-panel);
   z-index: 20;
   overflow-y: auto;
+  border-radius: var(--u-radius-lg);
 }
 
 /* ------------------------------------------------------- version history */
 
 .unline-version-history {
-  padding: 16px;
+  padding: 16px 20px;
 }
 
 .unline-version-history__header {
@@ -848,7 +857,7 @@
 .unline-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 200;
   background: rgba(2, 6, 14, 0.6);
   display: flex;
   align-items: center;
@@ -933,7 +942,7 @@
 /* ---------------------------------------------------------- empty state */
 
 .unline-empty {
-  margin: auto;
+  margin: 24px auto;
   text-align: center;
   padding: 48px 20px;
   color: var(--u-text-secondary);
@@ -957,74 +966,60 @@
   margin: 0 0 16px;
 }
 
-/* ---------------------------------------------------------- responsive */
+/* ------------------------------------------------------------ auth gate */
 
-@media (max-width: 1024px) {
-  .unline-header__menu-toggle {
-    display: inline-flex;
-  }
-
-  .unline-body {
-    grid-template-columns: minmax(0, 1fr);
-    position: relative;
-  }
-
-  .unline-sidebar {
-    position: fixed;
-    top: 57px;
-    bottom: 0;
-    left: 0;
-    width: 240px;
-    z-index: 35;
-    transform: translateX(0);
-    transition: transform 0.18s ease;
-  }
-
-  .unline-sidebar--collapsed {
-    display: block;
-    transform: translateX(-100%);
-  }
-
-  .unline-editor {
-    position: fixed;
-    top: 57px;
-    right: 0;
-    bottom: 0;
-    width: min(420px, 100vw);
-    z-index: 45;
-    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.5);
-  }
+.unline-loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 100dvh;
 }
 
+.unline-loading-screen__logo {
+  font-size: 32px;
+  color: var(--u-primary);
+  opacity: 0.85;
+}
+
+.unline-loading-screen p {
+  color: var(--u-text-secondary);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------- responsive */
+
 @media (max-width: 640px) {
-  .unline-header {
-    gap: 8px;
-    padding: 8px 12px;
+  .unline-header-row {
+    padding: 10px 12px;
   }
 
-  .unline-header__search {
-    order: 3;
-    flex-basis: 100%;
+  .unline-header__zone--left {
+    left: 8px;
   }
 
-  .unline-header__actions .unline-btn span {
-    display: none;
+  .unline-header__zone--right {
+    right: 8px;
+    gap: 4px;
   }
 
-  .unline-library {
-    padding: 14px;
+  .unline-main {
+    padding: 16px 12px 48px;
   }
 
-  .unline-tile-grid--grid {
-    grid-template-columns: 1fr;
+  .unline-editor-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .unline-editor-overlay__panel {
+    max-width: 100%;
   }
 
   .unline-editor {
-    top: 0;
-    width: 100vw;
-  }
-
-  .unline-editor__options {
-    grid-template-columns: 1fr;
+    border-radius: 0;
+    max-height: 100vh;
+    min-height: 100dvh;
   }
 }

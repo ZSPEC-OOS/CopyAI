@@ -1,70 +1,74 @@
 'use client';
 
+import Link from 'next/link';
 import { forwardRef, useState } from 'react';
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onNew: () => void;
-  onToggleSidebar: () => void;
 }
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? navigator.userAgent);
 const modKey = isMac ? '⌘' : 'Ctrl';
 
 export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
-  { searchQuery, onSearchChange, onNew, onToggleSidebar },
+  { searchQuery, onSearchChange, onNew },
   searchRef
 ) {
+  const [showMenu, setShowMenu] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
   return (
     <header className="unline-header">
-      <button
-        type="button"
-        className="unline-icon-btn unline-header__menu-toggle"
-        aria-label="Toggle sidebar"
-        onClick={onToggleSidebar}
-      >
-        ☰
-      </button>
+      <div className="unline-header-row">
+        <div className="unline-header__zone unline-header__zone--left">
+          <button
+            type="button"
+            className="unline-icon-btn"
+            aria-label="Menu"
+            aria-expanded={showMenu}
+            onClick={() => setShowMenu((v) => !v)}
+          >
+            ☰
+          </button>
+          {showMenu && (
+            <>
+              <div className="unline-menu-backdrop" onClick={() => setShowMenu(false)} />
+              <div
+                className="unline-dropdown"
+                role="menu"
+                onKeyDown={(e) => e.key === 'Escape' && setShowMenu(false)}
+              >
+                <Link href="/" className="unline-dropdown__item" role="menuitem">
+                  ← Back to CopyAI
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
 
-      <div className="unline-header__brand">
-        <span className="unline-header__logo" aria-hidden="true">
-          ⟡
-        </span>
-        <span className="unline-header__name">Unline</span>
-      </div>
+        <div className="unline-header__brand">
+          <span className="unline-header__logo" aria-hidden="true">
+            ⟡
+          </span>
+          <span className="unline-header__name">Unline</span>
+        </div>
 
-      <div className="unline-header__search">
-        <label htmlFor="unline-search" className="unline-visually-hidden">
-          Search saved text
-        </label>
-        <input
-          ref={searchRef}
-          id="unline-search"
-          type="search"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search title, text, tags, collections…"
-          className="unline-header__search-input"
-        />
-        <kbd className="unline-kbd">{modKey}K</kbd>
-      </div>
-
-      <div className="unline-header__actions">
-        <button
-          type="button"
-          className="unline-icon-btn"
-          aria-label="Keyboard shortcuts help"
-          aria-expanded={showHelp}
-          onClick={() => setShowHelp((v) => !v)}
-        >
-          ?
-        </button>
-        <button type="button" className="unline-btn unline-btn--primary" onClick={onNew}>
-          + New Text
-        </button>
+        <div className="unline-header__zone unline-header__zone--right">
+          <button
+            type="button"
+            className="unline-icon-btn"
+            aria-label="Keyboard shortcuts help"
+            aria-expanded={showHelp}
+            onClick={() => setShowHelp((v) => !v)}
+          >
+            ?
+          </button>
+          <button type="button" className="unline-btn unline-btn--primary" onClick={onNew}>
+            + New Text
+          </button>
+        </div>
       </div>
 
       {showHelp && (
@@ -112,6 +116,22 @@ export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
           </dl>
         </div>
       )}
+
+      <div className="unline-search-row">
+        <label htmlFor="unline-search" className="unline-visually-hidden">
+          Search saved text
+        </label>
+        <input
+          ref={searchRef}
+          id="unline-search"
+          type="search"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search title, text, tags, collections…"
+          className="unline-search-row__input"
+        />
+        <kbd className="unline-kbd">{modKey}K</kbd>
+      </div>
     </header>
   );
 });
