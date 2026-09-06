@@ -5,6 +5,7 @@ import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import type { Collection, TextItem } from '../types';
 import { formatRelativeDate, previewOf } from '../utils';
 import { ConfirmDialog } from './ConfirmDialog';
+import { OverflowMenu } from './OverflowMenu';
 
 interface TextTileProps {
   item: TextItem;
@@ -96,23 +97,34 @@ function TileMenu({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
-    <details className="unline-tile-menu" onClick={(e) => e.stopPropagation()}>
-      <summary className="unline-icon-btn" aria-label="More actions">
-        ⋯
-      </summary>
-      <div className="unline-tile-menu__panel" role="menu">
-        <button type="button" role="menuitem" onClick={() => onTogglePin(item.id)}>
-          {item.isPinned ? 'Unpin' : 'Pin to top'}
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          className="unline-tile-menu__danger"
-          onClick={() => setConfirmingDelete(true)}
-        >
-          Delete
-        </button>
-      </div>
+    <>
+      <OverflowMenu label="More actions">
+        {(close) => (
+          <>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                onTogglePin(item.id);
+              }}
+            >
+              {item.isPinned ? 'Unpin' : 'Pin to top'}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="unline-tile-menu__danger"
+              onClick={() => {
+                close();
+                setConfirmingDelete(true);
+              }}
+            >
+              Delete
+            </button>
+          </>
+        )}
+      </OverflowMenu>
       {confirmingDelete && (
         <ConfirmDialog
           title="Delete this text item?"
@@ -126,6 +138,6 @@ function TileMenu({
           onCancel={() => setConfirmingDelete(false)}
         />
       )}
-    </details>
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Collection, LibraryFilter, TextItem } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
+import { OverflowMenu } from './OverflowMenu';
 
 interface FilterBarProps {
   collections: Collection[];
@@ -174,24 +175,33 @@ function CollectionPill({
         📁 {collection.name}
         {count > 0 && <span className="unline-pill__count">{count}</span>}
       </button>
-      <details className="unline-tile-menu">
-        <summary className="unline-icon-btn unline-icon-btn--xs" aria-label={`More actions for ${collection.name}`}>
-          ⋯
-        </summary>
-        <div className="unline-tile-menu__panel" role="menu">
-          <button type="button" role="menuitem" onClick={() => setIsRenaming(true)}>
-            Rename
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="unline-tile-menu__danger"
-            onClick={() => setConfirmingDelete(true)}
-          >
-            Delete
-          </button>
-        </div>
-      </details>
+      <OverflowMenu label={`More actions for ${collection.name}`} triggerClassName="unline-icon-btn unline-icon-btn--xs">
+        {(close) => (
+          <>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                setIsRenaming(true);
+              }}
+            >
+              Rename
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="unline-tile-menu__danger"
+              onClick={() => {
+                close();
+                setConfirmingDelete(true);
+              }}
+            >
+              Delete
+            </button>
+          </>
+        )}
+      </OverflowMenu>
       {confirmingDelete && (
         <ConfirmDialog
           title={`Delete "${collection.name}"?`}

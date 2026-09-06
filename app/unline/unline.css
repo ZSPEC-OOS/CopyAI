@@ -630,14 +630,6 @@
   position: relative;
 }
 
-.unline-tile-menu > summary {
-  list-style: none;
-}
-
-.unline-tile-menu > summary::-webkit-details-marker {
-  display: none;
-}
-
 .unline-tile-menu__panel {
   position: absolute;
   right: 0;
