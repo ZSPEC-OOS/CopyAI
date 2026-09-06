@@ -259,12 +259,25 @@ export default function Page() {
       // account ("Jesse"/"copyai") writing to users/jesse. The first time
       // that exact username signs up for a real account, carry its old
       // data over to the new per-account doc.
-      if (!snap.exists() && currentUser.displayName?.trim().toLowerCase() === 'jesse') {
+      //
+      // This is gated on a dedicated `migratedFromLegacy` flag rather than
+      // "the new doc doesn't exist yet", because right after sign-up this
+      // effect can legitimately run twice in quick succession (once before
+      // Firebase Auth has attached the display name, once after) — and the
+      // Firestore-save effects below can create an *empty* users/{uid} doc
+      // in between those two runs. Gating on doc-existence would then see
+      // that empty doc on the second pass and skip the migration entirely,
+      // silently stranding the account with nothing. A flag makes this
+      // idempotent regardless of how many times or in what order it runs.
+      const alreadyMigrated = snap.exists() && snap.data()?.migratedFromLegacy === true;
+      if (!alreadyMigrated && currentUser.displayName?.trim().toLowerCase() === 'jesse') {
         const legacySnap = await getDoc(doc(db, 'users', 'jesse'));
-        if (legacySnap.exists()) {
-          await setDoc(userDocRef, legacySnap.data(), { merge: true });
-          snap = await getDoc(userDocRef);
-        }
+        await setDoc(
+          userDocRef,
+          { ...(legacySnap.exists() ? legacySnap.data() : {}), migratedFromLegacy: true },
+          { merge: true }
+        );
+        snap = await getDoc(userDocRef);
       }
       if (cancelled) return;
       if (snap.exists()) {
