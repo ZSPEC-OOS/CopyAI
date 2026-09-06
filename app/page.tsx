@@ -14,14 +14,26 @@ import {
   type User,
 } from 'firebase/auth';
 
-/** Maps a Firebase Auth error into the same generic message regardless of
- * cause (wrong password vs. unknown account), so login never leaks which
- * usernames exist. */
+/** Maps a Firebase Auth error into a message. Login always gets the same
+ * generic message regardless of cause (wrong password vs. unknown
+ * account), so it never leaks which usernames exist. Sign-up errors are
+ * config/validation problems, not account-enumeration risks, so those are
+ * shown specifically to make setup issues (like the sign-in provider not
+ * being enabled yet) diagnosable instead of a dead end. */
 function describeAuthError(code: string, mode: 'login' | 'signup'): string {
   if (mode === 'signup') {
     if (code === 'auth/email-already-in-use') return 'That username is already taken.';
     if (code === 'auth/weak-password') return 'Password must be at least 6 characters.';
-    return 'Could not create account. Please try again.';
+    if (code === 'auth/invalid-email') {
+      return 'That username has no valid characters in it — try letters and numbers.';
+    }
+    if (code === 'auth/operation-not-allowed') {
+      return 'Sign-up isn’t turned on yet. In the Firebase console, enable the Email/Password sign-in provider under Authentication → Sign-in method, then try again.';
+    }
+    if (code === 'auth/network-request-failed') {
+      return 'Network error reaching Firebase. Check your connection and try again.';
+    }
+    return code ? `Could not create account (${code}). Please try again.` : 'Could not create account. Please try again.';
   }
   return 'Incorrect username or password.';
 }
@@ -138,6 +150,7 @@ export default function Page() {
       await signInWithEmailAndPassword(auth, usernameToEmail(loginUser), loginPass);
     } catch (err) {
       const code = err instanceof Error && 'code' in err ? String((err as { code: unknown }).code) : '';
+      console.error('[CopyAI] login failed:', code, err);
       setLoginError(describeAuthError(code, 'login'));
     } finally {
       setAuthBusy(false);
@@ -165,6 +178,7 @@ export default function Page() {
       setCurrentUser({ ...credential.user, displayName: loginUser.trim() } as User);
     } catch (err) {
       const code = err instanceof Error && 'code' in err ? String((err as { code: unknown }).code) : '';
+      console.error('[CopyAI] sign-up failed:', code, err);
       setLoginError(describeAuthError(code, 'signup'));
     } finally {
       setAuthBusy(false);
@@ -296,7 +310,8 @@ export default function Page() {
           .then(() => {
             src.postMessage({ type: 'COPYAI_LOGGED_IN' }, event.origin);
           })
-          .catch(() => {
+          .catch((err) => {
+            console.error('[CopyAI] wrkflow embed login failed:', err?.code, err);
             src.postMessage({ type: 'COPYAI_LOGIN_FAILED', error: 'Incorrect credentials' }, event.origin);
           });
       }
