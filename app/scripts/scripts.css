@@ -400,6 +400,7 @@
 /* ----------------------------------------------------------------- tile */
 
 .scripts-tile {
+  position: relative;
   background: var(--scr-panel);
   border: 1px solid var(--scr-border);
   border-radius: var(--scr-radius-md);
@@ -417,6 +418,33 @@
 
 .scripts-tile[data-pinned] {
   border-color: rgba(139, 92, 246, 0.5);
+}
+
+.scripts-tile[data-copy-state='copied'] {
+  border-color: var(--scr-success);
+}
+
+.scripts-tile[data-copy-state='error'] {
+  border-color: var(--scr-danger);
+}
+
+.scripts-tile__copied-badge {
+  position: absolute;
+  top: -9px;
+  right: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid var(--scr-success);
+  color: var(--scr-success);
+}
+
+.scripts-tile__copied-badge--error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: var(--scr-danger);
+  color: var(--scr-danger);
 }
 
 .scripts-tile__header {

@@ -22,17 +22,26 @@ export function TextTile({ item, collection, onOpen, onTogglePin, onToggleFavori
     <article
       className="scripts-tile"
       data-pinned={item.isPinned || undefined}
+      data-copy-state={state !== 'idle' ? state : undefined}
       tabIndex={0}
       role="button"
-      aria-label={`Open ${item.title}`}
-      onClick={() => onOpen(item.id)}
+      aria-label={state === 'copied' ? `Copied ${item.title}` : `Copy ${item.title}`}
+      onClick={() => copy(item.cleanedText)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onOpen(item.id);
+          copy(item.cleanedText);
         }
       }}
     >
+      {state !== 'idle' && (
+        <span
+          className={`scripts-tile__copied-badge ${state === 'error' ? 'scripts-tile__copied-badge--error' : ''}`}
+          aria-hidden="true"
+        >
+          {state === 'copied' ? 'Copied ✓' : 'Copy failed'}
+        </span>
+      )}
       <header className="scripts-tile__header">
         <h3 className="scripts-tile__title">
           {item.isPinned && <span aria-hidden="true">📌 </span>}
@@ -53,13 +62,14 @@ export function TextTile({ item, collection, onOpen, onTogglePin, onToggleFavori
           </button>
           <button
             type="button"
-            className={`scripts-btn scripts-btn--sm ${state === 'copied' ? 'scripts-btn--success' : ''}`}
+            className="scripts-btn scripts-btn--sm"
+            aria-label={`Edit ${item.title}`}
             onClick={(e) => {
               e.stopPropagation();
-              copy(item.cleanedText);
+              onOpen(item.id);
             }}
           >
-            {state === 'copied' ? 'Copied ✓' : state === 'error' ? 'Copy failed' : 'Copy'}
+            Edit
           </button>
           <TileMenu item={item} onTogglePin={onTogglePin} onDelete={onDelete} />
         </div>
