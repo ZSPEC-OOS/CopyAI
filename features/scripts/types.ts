@@ -1,6 +1,6 @@
-// Core domain types for the Unline text-cleanup module.
+// Core domain types for the Scripts text-cleanup module.
 // This module is self-contained: nothing here is imported by the rest
-// of the CopyAI app, and nothing outside features/unline or app/unline
+// of the CopyAI app, and nothing outside features/scripts or app/scripts
 // should need to import CopyAI internals.
 
 export type ID = string;

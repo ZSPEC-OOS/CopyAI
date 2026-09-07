@@ -20,7 +20,7 @@ export function TextTile({ item, collection, onOpen, onTogglePin, onToggleFavori
 
   return (
     <article
-      className="unline-tile"
+      className="scripts-tile"
       data-pinned={item.isPinned || undefined}
       tabIndex={0}
       role="button"
@@ -33,15 +33,15 @@ export function TextTile({ item, collection, onOpen, onTogglePin, onToggleFavori
         }
       }}
     >
-      <header className="unline-tile__header">
-        <h3 className="unline-tile__title">
+      <header className="scripts-tile__header">
+        <h3 className="scripts-tile__title">
           {item.isPinned && <span aria-hidden="true">📌 </span>}
           {item.title}
         </h3>
-        <div className="unline-tile__quick-actions">
+        <div className="scripts-tile__quick-actions">
           <button
             type="button"
-            className="unline-icon-btn"
+            className="scripts-icon-btn"
             aria-pressed={item.isFavorite}
             aria-label={item.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             onClick={(e) => {
@@ -53,7 +53,7 @@ export function TextTile({ item, collection, onOpen, onTogglePin, onToggleFavori
           </button>
           <button
             type="button"
-            className={`unline-btn unline-btn--sm ${state === 'copied' ? 'unline-btn--success' : ''}`}
+            className={`scripts-btn scripts-btn--sm ${state === 'copied' ? 'scripts-btn--success' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               copy(item.cleanedText);
@@ -65,18 +65,18 @@ export function TextTile({ item, collection, onOpen, onTogglePin, onToggleFavori
         </div>
       </header>
 
-      <p className="unline-tile__preview">{previewOf(item.cleanedText) || 'Empty text item.'}</p>
+      <p className="scripts-tile__preview">{previewOf(item.cleanedText) || 'Empty text item.'}</p>
 
-      <footer className="unline-tile__footer">
-        <div className="unline-tile__tags">
-          {collection && <span className="unline-chip unline-chip--collection">{collection.name}</span>}
+      <footer className="scripts-tile__footer">
+        <div className="scripts-tile__tags">
+          {collection && <span className="scripts-chip scripts-chip--collection">{collection.name}</span>}
           {item.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="unline-chip">
+            <span key={tag} className="scripts-chip">
               {tag}
             </span>
           ))}
         </div>
-        <time className="unline-tile__date" dateTime={item.updatedAt}>
+        <time className="scripts-tile__date" dateTime={item.updatedAt}>
           {formatRelativeDate(item.updatedAt)}
         </time>
       </footer>
@@ -96,18 +96,18 @@ function TileMenu({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
-    <details className="unline-tile-menu" onClick={(e) => e.stopPropagation()}>
-      <summary className="unline-icon-btn" aria-label="More actions">
+    <details className="scripts-tile-menu" onClick={(e) => e.stopPropagation()}>
+      <summary className="scripts-icon-btn" aria-label="More actions">
         ⋯
       </summary>
-      <div className="unline-tile-menu__panel" role="menu">
+      <div className="scripts-tile-menu__panel" role="menu">
         <button type="button" role="menuitem" onClick={() => onTogglePin(item.id)}>
           {item.isPinned ? 'Unpin' : 'Pin to top'}
         </button>
         <button
           type="button"
           role="menuitem"
-          className="unline-tile-menu__danger"
+          className="scripts-tile-menu__danger"
           onClick={() => setConfirmingDelete(true)}
         >
           Delete

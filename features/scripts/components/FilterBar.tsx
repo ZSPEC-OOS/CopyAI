@@ -42,7 +42,7 @@ export function FilterBar({
   };
 
   return (
-    <nav className="unline-filterbar" aria-label="Filter saved text">
+    <nav className="scripts-filterbar" aria-label="Filter saved text">
       <Pill
         label="All Text"
         count={items.length}
@@ -75,7 +75,7 @@ export function FilterBar({
 
       {isCreating ? (
         <form
-          className="unline-filterbar__new-form"
+          className="scripts-filterbar__new-form"
           onSubmit={(e) => {
             e.preventDefault();
             submitNewCollection();
@@ -97,7 +97,7 @@ export function FilterBar({
           />
         </form>
       ) : (
-        <button type="button" className="unline-pill unline-pill--dashed" onClick={() => setIsCreating(true)}>
+        <button type="button" className="scripts-pill scripts-pill--dashed" onClick={() => setIsCreating(true)}>
           + New Collection
         </button>
       )}
@@ -117,9 +117,9 @@ function Pill({
   onClick: () => void;
 }) {
   return (
-    <button type="button" className="unline-pill" data-active={active || undefined} onClick={onClick}>
+    <button type="button" className="scripts-pill" data-active={active || undefined} onClick={onClick}>
       {label}
-      {typeof count === 'number' && count > 0 && <span className="unline-pill__count">{count}</span>}
+      {typeof count === 'number' && count > 0 && <span className="scripts-pill__count">{count}</span>}
     </button>
   );
 }
@@ -146,7 +146,7 @@ function CollectionPill({
   if (isRenaming) {
     return (
       <form
-        className="unline-filterbar__new-form"
+        className="scripts-filterbar__new-form"
         onSubmit={(e) => {
           e.preventDefault();
           onRename(name.trim() || collection.name);
@@ -169,23 +169,23 @@ function CollectionPill({
   }
 
   return (
-    <span className="unline-pill unline-pill--collection-wrap">
-      <button type="button" className="unline-pill__label" data-active={active || undefined} onClick={onSelect}>
+    <span className="scripts-pill scripts-pill--collection-wrap">
+      <button type="button" className="scripts-pill__label" data-active={active || undefined} onClick={onSelect}>
         📁 {collection.name}
-        {count > 0 && <span className="unline-pill__count">{count}</span>}
+        {count > 0 && <span className="scripts-pill__count">{count}</span>}
       </button>
-      <details className="unline-tile-menu">
-        <summary className="unline-icon-btn unline-icon-btn--xs" aria-label={`More actions for ${collection.name}`}>
+      <details className="scripts-tile-menu">
+        <summary className="scripts-icon-btn scripts-icon-btn--xs" aria-label={`More actions for ${collection.name}`}>
           ⋯
         </summary>
-        <div className="unline-tile-menu__panel" role="menu">
+        <div className="scripts-tile-menu__panel" role="menu">
           <button type="button" role="menuitem" onClick={() => setIsRenaming(true)}>
             Rename
           </button>
           <button
             type="button"
             role="menuitem"
-            className="unline-tile-menu__danger"
+            className="scripts-tile-menu__danger"
             onClick={() => setConfirmingDelete(true)}
           >
             Delete

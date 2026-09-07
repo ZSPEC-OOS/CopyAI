@@ -121,7 +121,7 @@ export default function Page() {
 
   // ----------- State: auth -----------
   // Each profile is a real Firebase Auth account (see lib/firebase.ts for
-  // the username -> synthetic-email mapping), so prompts and Unline text
+  // the username -> synthetic-email mapping), so prompts and Scripts text
   // are automatically scoped per-account with no crossover between users.
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -924,15 +924,15 @@ export default function Page() {
 
                 <div style={{ height: 1, background: BORDER, margin: '4px 0' }} />
 
-                {/* Unline — standalone text-cleanup module, opens its own app at /unline */}
+                {/* Scripts — standalone text-cleanup module, opens its own app at /scripts */}
                 <a
-                  href="/unline"
+                  href="/scripts"
                   style={{ ...MENU_ITEM_STYLE, textDecoration: 'none' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = SURFACE; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; }}
                   onClick={() => setShowMenu(false)}
                 >
-                  🧹 Unline
+                  🧹 Scripts
                 </a>
 
                 <div style={{ height: 1, background: BORDER, margin: '4px 0' }} />

@@ -56,7 +56,7 @@ export function Library({
   const empty = emptyStateFor(filter, searchQuery.trim().length > 0, totalItemCount);
 
   return (
-    <section className="unline-library" aria-label="Saved text">
+    <section className="scripts-library" aria-label="Saved text">
       {items.length === 0 ? (
         <EmptyState
           icon={empty.icon}
@@ -64,14 +64,14 @@ export function Library({
           description={empty.description}
           action={
             totalItemCount === 0 && (
-              <button type="button" className="unline-btn unline-btn--primary" onClick={onNewText}>
+              <button type="button" className="scripts-btn scripts-btn--primary" onClick={onNewText}>
                 + New Text
               </button>
             )
           }
         />
       ) : (
-        <div className="unline-tile-list">
+        <div className="scripts-tile-list">
           {items.map((item) => (
             <TextTile
               key={item.id}
