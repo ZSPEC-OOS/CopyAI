@@ -8,7 +8,7 @@ log in, and there was only ever one library of prompts.
 
 This has been replaced with real accounts via **Firebase Authentication**
 (email/password), so multiple people can each have their own login, their
-own CopyAI prompts, and their own Unline saved text, with no crossover.
+own CopyAI prompts, and their own Scripts saved text, with no crossover.
 
 ## How login still looks like "username + password"
 
@@ -44,10 +44,10 @@ username with no extra lookup table.
     of comparing against the hardcoded string pair. It keeps working
     exactly as before, *provided* the legacy `Jesse`/`copyai` pair is
     recreated as a real account once — see Migration below.
-- Unline (`features/unline/`) reads the same Firebase Auth session (via
+- Scripts (`features/scripts/`) reads the same Firebase Auth session (via
   `useAuthUid`, the one deliberate coupling point back to `lib/firebase.ts`)
   and namespaces its own `localStorage` keys by uid, so each profile also
-  gets its own separate Unline library. Visiting `/unline` while signed out
+  gets its own separate Scripts library. Visiting `/scripts` while signed out
   redirects to `/`.
 
 ## Required setup (cannot be done from code)

@@ -20,12 +20,12 @@ export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
   const [showHelp, setShowHelp] = useState(false);
 
   return (
-    <header className="unline-header">
-      <div className="unline-header-row">
-        <div className="unline-header__zone unline-header__zone--left">
+    <header className="scripts-header">
+      <div className="scripts-header-row">
+        <div className="scripts-header__zone scripts-header__zone--left">
           <button
             type="button"
-            className="unline-icon-btn"
+            className="scripts-icon-btn"
             aria-label="Menu"
             aria-expanded={showMenu}
             onClick={() => setShowMenu((v) => !v)}
@@ -34,13 +34,13 @@ export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
           </button>
           {showMenu && (
             <>
-              <div className="unline-menu-backdrop" onClick={() => setShowMenu(false)} />
+              <div className="scripts-menu-backdrop" onClick={() => setShowMenu(false)} />
               <div
-                className="unline-dropdown"
+                className="scripts-dropdown"
                 role="menu"
                 onKeyDown={(e) => e.key === 'Escape' && setShowMenu(false)}
               >
-                <Link href="/" className="unline-dropdown__item" role="menuitem">
+                <Link href="/" className="scripts-dropdown__item" role="menuitem">
                   ← Back to CopyAI
                 </Link>
               </div>
@@ -48,34 +48,34 @@ export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
           )}
         </div>
 
-        <div className="unline-header__brand">
-          <span className="unline-header__logo" aria-hidden="true">
+        <div className="scripts-header__brand">
+          <span className="scripts-header__logo" aria-hidden="true">
             ⟡
           </span>
-          <span className="unline-header__name">Unline</span>
+          <span className="scripts-header__name">Scripts</span>
         </div>
 
-        <div className="unline-header__zone unline-header__zone--right">
+        <div className="scripts-header__zone scripts-header__zone--right">
           <button
             type="button"
-            className="unline-icon-btn"
+            className="scripts-icon-btn"
             aria-label="Keyboard shortcuts help"
             aria-expanded={showHelp}
             onClick={() => setShowHelp((v) => !v)}
           >
             ?
           </button>
-          <button type="button" className="unline-btn unline-btn--primary" onClick={onNew}>
+          <button type="button" className="scripts-btn scripts-btn--primary" onClick={onNew}>
             + New Text
           </button>
         </div>
       </div>
 
       {showHelp && (
-        <div className="unline-help-popover" role="dialog" aria-label="Keyboard shortcuts">
+        <div className="scripts-help-popover" role="dialog" aria-label="Keyboard shortcuts">
           <button
             type="button"
-            className="unline-icon-btn unline-help-popover__close"
+            className="scripts-icon-btn scripts-help-popover__close"
             aria-label="Close"
             onClick={() => setShowHelp(false)}
           >
@@ -85,31 +85,31 @@ export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
           <dl>
             <div>
               <dt>
-                <kbd className="unline-kbd">{modKey}K</kbd>
+                <kbd className="scripts-kbd">{modKey}K</kbd>
               </dt>
               <dd>Search</dd>
             </div>
             <div>
               <dt>
-                <kbd className="unline-kbd">{modKey}N</kbd>
+                <kbd className="scripts-kbd">{modKey}N</kbd>
               </dt>
               <dd>New text</dd>
             </div>
             <div>
               <dt>
-                <kbd className="unline-kbd">{modKey}S</kbd>
+                <kbd className="scripts-kbd">{modKey}S</kbd>
               </dt>
               <dd>Save</dd>
             </div>
             <div>
               <dt>
-                <kbd className="unline-kbd">{modKey}⏎</kbd>
+                <kbd className="scripts-kbd">{modKey}⏎</kbd>
               </dt>
               <dd>Copy</dd>
             </div>
             <div>
               <dt>
-                <kbd className="unline-kbd">Esc</kbd>
+                <kbd className="scripts-kbd">Esc</kbd>
               </dt>
               <dd>Close editor / dialog</dd>
             </div>
@@ -117,20 +117,20 @@ export const Header = forwardRef<HTMLInputElement, HeaderProps>(function Header(
         </div>
       )}
 
-      <div className="unline-search-row">
-        <label htmlFor="unline-search" className="unline-visually-hidden">
+      <div className="scripts-search-row">
+        <label htmlFor="scripts-search" className="scripts-visually-hidden">
           Search saved text
         </label>
         <input
           ref={searchRef}
-          id="unline-search"
+          id="scripts-search"
           type="search"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search title, text, tags, collections…"
-          className="unline-search-row__input"
+          className="scripts-search-row__input"
         />
-        <kbd className="unline-kbd">{modKey}K</kbd>
+        <kbd className="scripts-kbd">{modKey}K</kbd>
       </div>
     </header>
   );

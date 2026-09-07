@@ -13,7 +13,7 @@ export interface ShortcutHandlers {
 /**
  * Cmd/Ctrl+K search, Cmd/Ctrl+N new text, Cmd/Ctrl+S save,
  * Cmd/Ctrl+Enter copy, Escape close. Browser defaults are only
- * prevented for the combinations Unline actually handles.
+ * prevented for the combinations Scripts actually handles.
  */
 export function useKeyboardShortcuts(handlers: ShortcutHandlers): void {
   const handlersRef = useRef(handlers);

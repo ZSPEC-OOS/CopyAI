@@ -1,8 +1,8 @@
 'use client';
 
-// Unline's one deliberate coupling point to the host app: it reads the
+// Scripts's one deliberate coupling point to the host app: it reads the
 // shared Firebase Auth session (lib/firebase.ts) so each CopyAI profile
-// gets its own Unline library, with no crossover between accounts. It does
+// gets its own Scripts library, with no crossover between accounts. It does
 // not import any CopyAI app/business logic — only this shared config.
 
 import { useEffect, useState } from 'react';

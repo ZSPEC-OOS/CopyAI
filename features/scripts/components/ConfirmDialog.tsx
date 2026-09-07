@@ -53,30 +53,30 @@ export function ConfirmDialog({
   }, [onCancel]);
 
   return (
-    <div className="unline-modal-backdrop" onClick={onCancel}>
+    <div className="scripts-modal-backdrop" onClick={onCancel}>
       <div
         ref={dialogRef}
-        className="unline-modal"
+        className="scripts-modal"
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="unline-confirm-title"
-        aria-describedby="unline-confirm-description"
+        aria-labelledby="scripts-confirm-title"
+        aria-describedby="scripts-confirm-description"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="unline-confirm-title" className="unline-modal__title">
+        <h2 id="scripts-confirm-title" className="scripts-modal__title">
           {title}
         </h2>
-        <p id="unline-confirm-description" className="unline-modal__description">
+        <p id="scripts-confirm-description" className="scripts-modal__description">
           {description}
         </p>
-        <div className="unline-modal__actions">
-          <button type="button" className="unline-btn unline-btn--ghost" onClick={onCancel}>
+        <div className="scripts-modal__actions">
+          <button type="button" className="scripts-btn scripts-btn--ghost" onClick={onCancel}>
             Cancel
           </button>
           <button
             ref={confirmRef}
             type="button"
-            className={`unline-btn ${danger ? 'unline-btn--danger' : 'unline-btn--primary'}`}
+            className={`scripts-btn ${danger ? 'scripts-btn--danger' : 'scripts-btn--primary'}`}
             onClick={onConfirm}
           >
             {confirmLabel}

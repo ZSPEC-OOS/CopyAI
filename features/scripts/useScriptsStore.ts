@@ -10,9 +10,9 @@ import { useSyncExternalStore } from 'react';
 import * as storage from './storage';
 import type { DataSnapshot } from './storage';
 
-export type UnlineData = DataSnapshot;
+export type ScriptsData = DataSnapshot;
 
-export function useUnlineData(): UnlineData {
+export function useScriptsData(): ScriptsData {
   return useSyncExternalStore(storage.subscribe, storage.getDataSnapshot, storage.getServerSnapshot);
 }
 
@@ -28,7 +28,7 @@ export function useTextItemVersions(textItemId: string | null) {
   return textItemId ? storage.listVersions(textItemId) : EMPTY_VERSIONS;
 }
 
-export const unlineActions = {
+export const scriptsActions = {
   createTextItem: storage.createTextItem,
   updateTextItem: storage.updateTextItem,
   deleteTextItem: storage.deleteTextItem,

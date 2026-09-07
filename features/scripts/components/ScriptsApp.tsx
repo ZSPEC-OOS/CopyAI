@@ -6,7 +6,7 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { searchTextItems, sortLibrary } from '../search';
 import * as storage from '../storage';
 import { transformText } from '../transform';
-import { unlineActions, useUnlineData } from '../useUnlineStore';
+import { scriptsActions, useScriptsData } from '../useScriptsStore';
 import { DEFAULT_TRANSFORM_OPTIONS, type Draft, type LibraryFilter, type TextItem } from '../types';
 import { generateId } from '../utils';
 import { DraftRecoveryBanner } from './DraftRecoveryBanner';
@@ -31,8 +31,8 @@ function applyFilter(items: TextItem[], filter: LibraryFilter): TextItem[] {
 
 type EditorTarget = { kind: 'item'; id: string; draft?: Draft } | { kind: 'new'; draft: Draft } | null;
 
-export function UnlineApp() {
-  const { items, collections } = useUnlineData();
+export function ScriptsApp() {
+  const { items, collections } = useScriptsData();
   const [filter, setFilter] = useState<LibraryFilter>({ kind: 'all' });
   const [searchQuery, setSearchQuery] = useState('');
   const [editorTarget, setEditorTarget] = useState<EditorTarget>(null);
@@ -89,7 +89,7 @@ export function UnlineApp() {
   const editorIsStale = editorTarget?.kind === 'item' && !currentItem;
 
   return (
-    <div className="unline-root">
+    <div className="scripts-root">
       <Header ref={searchInputRef} searchQuery={searchQuery} onSearchChange={setSearchQuery} onNew={() => openNewDraft()} />
 
       {draftRecovery.recoverable && (
@@ -108,7 +108,7 @@ export function UnlineApp() {
       )}
 
       {rejectionMessage && (
-        <div className="unline-toast unline-toast--error" role="alert">
+        <div className="scripts-toast scripts-toast--error" role="alert">
           {rejectionMessage}
           <button type="button" onClick={() => setRejectionMessage(null)} aria-label="Dismiss">
             ×
@@ -116,7 +116,7 @@ export function UnlineApp() {
         </div>
       )}
 
-      <main className="unline-main">
+      <main className="scripts-main">
         <DropZone onText={openNewDraft} onRejected={setRejectionMessage} />
 
         <FilterBar
@@ -124,9 +124,9 @@ export function UnlineApp() {
           items={items}
           filter={filter}
           onFilterChange={setFilter}
-          onCreateCollection={(name) => unlineActions.createCollection(name)}
-          onRenameCollection={(id, name) => unlineActions.renameCollection(id, name)}
-          onDeleteCollection={(id) => unlineActions.deleteCollection(id)}
+          onCreateCollection={(name) => scriptsActions.createCollection(name)}
+          onRenameCollection={(id, name) => scriptsActions.renameCollection(id, name)}
+          onDeleteCollection={(id) => scriptsActions.deleteCollection(id)}
         />
 
         <Library
@@ -138,14 +138,14 @@ export function UnlineApp() {
           onOpenItem={openItem}
           onTogglePin={(id) => {
             const item = storage.getItem(id);
-            if (item) unlineActions.updateTextItem(id, { isPinned: !item.isPinned });
+            if (item) scriptsActions.updateTextItem(id, { isPinned: !item.isPinned });
           }}
           onToggleFavorite={(id) => {
             const item = storage.getItem(id);
-            if (item) unlineActions.updateTextItem(id, { isFavorite: !item.isFavorite });
+            if (item) scriptsActions.updateTextItem(id, { isFavorite: !item.isFavorite });
           }}
           onDeleteItem={(id) => {
-            unlineActions.deleteTextItem(id);
+            scriptsActions.deleteTextItem(id);
             if (editorTarget?.kind === 'item' && editorTarget.id === id) closeEditor();
           }}
           onNewText={() => openNewDraft()}
@@ -153,8 +153,8 @@ export function UnlineApp() {
       </main>
 
       {editorTarget && !editorIsStale && (
-        <div className="unline-editor-overlay" onClick={closeEditor}>
-          <div className="unline-editor-overlay__panel" onClick={(e) => e.stopPropagation()}>
+        <div className="scripts-editor-overlay" onClick={closeEditor}>
+          <div className="scripts-editor-overlay__panel" onClick={(e) => e.stopPropagation()}>
             <Editor
               ref={editorRef}
               key={editorSessionId}

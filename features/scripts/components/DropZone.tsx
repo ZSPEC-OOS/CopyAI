@@ -44,7 +44,7 @@ export function DropZone({ onText, onRejected }: DropZoneProps) {
 
   return (
     <div
-      className="unline-dropzone"
+      className="scripts-dropzone"
       data-active={isDragOver || undefined}
       onDragOver={(e) => {
         e.preventDefault();
@@ -72,7 +72,7 @@ export function DropZone({ onText, onRejected }: DropZoneProps) {
     >
       <input
         ref={inputRef}
-        className="unline-dropzone__paste-target"
+        className="scripts-dropzone__paste-target"
         aria-label="Paste text here to clean it up, or use the file picker below"
         placeholder="Click here and paste (Ctrl/Cmd+V) — or drag a .txt file in"
         onPaste={(e) => {
@@ -83,11 +83,11 @@ export function DropZone({ onText, onRejected }: DropZoneProps) {
           }
         }}
       />
-      <div className="unline-dropzone__copy">
-        <strong>Drop text here or paste to Unline</strong>
+      <div className="scripts-dropzone__copy">
+        <strong>Drop text here or paste to Scripts</strong>
         <span>We&apos;ll remove line breaks and clean it up for you.</span>
       </div>
-      <label className="unline-dropzone__file">
+      <label className="scripts-dropzone__file">
         or choose a .txt file
         <input
           type="file"

@@ -1,4 +1,4 @@
-// Browser-only persistence for Unline. There is no backend: this module is
+// Browser-only persistence for Scripts. There is no backend: this module is
 // the entire "server" — a validated, size-limited localStorage repository
 // with a tiny pub-sub layer so React components can subscribe to changes
 // via useSyncExternalStore. Keeping persistence here (not in components)
@@ -21,7 +21,7 @@ import { clamp, generateId, nowISO } from './utils';
 
 // All keys are namespaced by the signed-in profile's Firebase uid, set via
 // setNamespace() before this module is read. This is what gives each
-// CopyAI profile its own Unline library with no crossover — switching
+// CopyAI profile its own Scripts library with no crossover — switching
 // profiles switches the entire keyspace, not just the visible data.
 let namespace = '_unauthenticated';
 
@@ -35,6 +35,9 @@ export function getNamespace(): string {
   return namespace;
 }
 
+// Key prefix intentionally left as "unline:v1:" (the feature's old name)
+// rather than renamed to "scripts" — changing it would orphan every
+// existing user's saved text under the old keys with no migration path.
 const KEYS = {
   items: () => `unline:v1:${namespace}:items`,
   collections: () => `unline:v1:${namespace}:collections`,

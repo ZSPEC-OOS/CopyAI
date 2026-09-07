@@ -3,7 +3,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import * as storage from '../storage';
-import { unlineActions, useTextItemVersions } from '../useUnlineStore';
+import { scriptsActions, useTextItemVersions } from '../useScriptsStore';
 import { countCharacters, countWords } from '../transform';
 import {
   DEFAULT_TRANSFORM_OPTIONS,
@@ -108,7 +108,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     try {
       let saved: TextItem;
       if (currentItem) {
-        saved = unlineActions.updateTextItem(currentItem.id, {
+        saved = scriptsActions.updateTextItem(currentItem.id, {
           title,
           cleanedText: text,
           collectionId,
@@ -117,7 +117,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           isPinned,
         });
       } else {
-        saved = unlineActions.createTextItem({
+        saved = scriptsActions.createTextItem({
           title: title || 'Untitled',
           originalText: initialDraft?.originalText ?? text,
           cleanedText: text,
@@ -126,7 +126,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
           tags,
         });
         if (isFavorite || isPinned) {
-          saved = unlineActions.updateTextItem(saved.id, { isFavorite, isPinned });
+          saved = scriptsActions.updateTextItem(saved.id, { isFavorite, isPinned });
         }
       }
       setCurrentItem(saved);
@@ -162,27 +162,27 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   };
 
   return (
-    <aside className="unline-editor" aria-label="Text editor">
-      <header className="unline-editor__header">
+    <aside className="scripts-editor" aria-label="Text editor">
+      <header className="scripts-editor__header">
         <input
-          className="unline-editor__title"
+          className="scripts-editor__title"
           aria-label="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Untitled"
           maxLength={LIMITS.MAX_TITLE_CHARS}
         />
-        <div className="unline-editor__header-actions">
+        <div className="scripts-editor__header-actions">
           <button
             type="button"
-            className="unline-icon-btn"
+            className="scripts-icon-btn"
             aria-pressed={isFavorite}
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             onClick={() => setIsFavorite((v) => !v)}
           >
             {isFavorite ? '★' : '☆'}
           </button>
-          <button type="button" className="unline-icon-btn" aria-label="Close editor" onClick={onClose}>
+          <button type="button" className="scripts-icon-btn" aria-label="Close editor" onClick={onClose}>
             ×
           </button>
         </div>
@@ -190,10 +190,10 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
       <SaveStatusPill status={saveStatus} errorMessage={errorMessage} />
 
-      <div className="unline-editor__body">
-        <section className="unline-editor__section">
+      <div className="scripts-editor__body">
+        <section className="scripts-editor__section">
           <textarea
-            className="unline-editor__cleaned"
+            className="scripts-editor__cleaned"
             aria-label="Text"
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -201,13 +201,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
             rows={14}
             autoFocus
           />
-          <div className="unline-editor__stats">
+          <div className="scripts-editor__stats">
             {wordCount} words · {characterCount} characters
           </div>
         </section>
 
-        <section className="unline-editor__section unline-editor__meta">
-          <label className="unline-field">
+        <section className="scripts-editor__section scripts-editor__meta">
+          <label className="scripts-field">
             Collection
             <select
               value={collectionId ?? ''}
@@ -223,11 +223,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
             </select>
           </label>
 
-          <label className="unline-field">
+          <label className="scripts-field">
             Tags
-            <div className="unline-tag-input">
+            <div className="scripts-tag-input">
               {tags.map((tag) => (
-                <span key={tag} className="unline-chip unline-chip--removable">
+                <span key={tag} className="scripts-chip scripts-chip--removable">
                   {tag}
                   <button type="button" aria-label={`Remove tag ${tag}`} onClick={() => setTags(tags.filter((t) => t !== tag))}>
                     ×
@@ -250,32 +250,32 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
             </div>
           </label>
 
-          <label className="unline-checkbox">
+          <label className="scripts-checkbox">
             <input type="checkbox" checked={isPinned} onChange={() => setIsPinned((v) => !v)} />
             Pin to top of library
           </label>
         </section>
       </div>
 
-      <footer className="unline-editor__footer">
+      <footer className="scripts-editor__footer">
         <button
           type="button"
-          className={`unline-btn ${copyState === 'copied' ? 'unline-btn--success' : ''}`}
+          className={`scripts-btn ${copyState === 'copied' ? 'scripts-btn--success' : ''}`}
           onClick={handleCopy}
         >
           {copyState === 'copied' ? 'Copied ✓' : 'Copy'}
         </button>
         {currentItem && (
-          <button type="button" className="unline-btn" onClick={() => setShowHistory(true)}>
+          <button type="button" className="scripts-btn" onClick={() => setShowHistory(true)}>
             History{versions.length > 0 ? ` (${versions.length})` : ''}
           </button>
         )}
         {currentItem && (
-          <button type="button" className="unline-btn unline-btn--danger-ghost" onClick={() => setConfirmingDelete(true)}>
+          <button type="button" className="scripts-btn scripts-btn--danger-ghost" onClick={() => setConfirmingDelete(true)}>
             Delete
           </button>
         )}
-        <button type="button" className="unline-btn unline-btn--primary" onClick={handleSave}>
+        <button type="button" className="scripts-btn scripts-btn--primary" onClick={handleSave}>
           Save
         </button>
       </footer>
@@ -296,12 +296,12 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
       )}
 
       {showHistory && (
-        <div className="unline-editor__history-overlay">
+        <div className="scripts-editor__history-overlay">
           <VersionHistory
             versions={versions}
             onClose={() => setShowHistory(false)}
             onRestore={(versionId) => {
-              const restored = unlineActions.restoreVersion(versionId);
+              const restored = scriptsActions.restoreVersion(versionId);
               setCurrentItem(restored);
               setTitle(restored.title);
               setText(restored.cleanedText);
@@ -336,7 +336,7 @@ function SaveStatusPill({ status, errorMessage }: { status: SaveStatus; errorMes
             : null;
   if (!label) return null;
   return (
-    <div className="unline-save-status" data-status={status} role="status">
+    <div className="scripts-save-status" data-status={status} role="status">
       {label}
     </div>
   );
